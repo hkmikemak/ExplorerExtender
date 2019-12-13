@@ -24,6 +24,6 @@ namespace ExplorerExtender.Models {
     }
 
     public string Name { get; set; }
-    public List<BaseMenuItem> Items { get; set; }
+    public List<BaseMenuItem> Items { get; set; } = new List<BaseMenuItem>();
   }
 }

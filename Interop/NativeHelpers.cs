@@ -49,15 +49,15 @@ namespace ExplorerExtender.Interop {
             Marshal.ThrowExceptionForHR(WinError.E_FAIL);
           }
 
-          var files = new List<string>();
-          var folders = new List<string>();
+          List<string> files = new List<string>();
+          List<string> folders = new List<string>();
 
           for (int i = 0; i < nFiles; i++) {
             StringBuilder sb = new StringBuilder(260);
             if (NativeMethods.DragQueryFile(hDrop, (uint)i, sb, sb.Capacity) == 0) {
               Marshal.ThrowExceptionForHR(WinError.E_FAIL);
             } else {
-              var item = sb.ToString();
+              string item = sb.ToString();
               if (File.Exists(item)) {
                 files.Add(item);
               } else if (Directory.Exists(item)) {
