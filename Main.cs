@@ -16,12 +16,13 @@ namespace ExplorerExtender {
   [Guid("23a8b362-4cce-454a-b9d9-7490bfde4d83")]
   public class Main : IContextMenu, IShellExtInit {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-    
+
     // All commands is stored as class rather than static class, we need to keep a reference at all time
+    internal List<ICommand> AllAvailableCommands = new List<ICommand>();
     internal List<string> Files = new List<string>();
     internal List<string> Folders = new List<string>();
     internal bool IsClickOnEmptyArea = false;
-    internal List<CommandMenuItem> Menu = new List<CommandMenuItem>();
+    internal List<CommandMenuItem> GeneratedCommands = new List<CommandMenuItem>();
 
     #region ComRegister
 
@@ -51,8 +52,17 @@ namespace ExplorerExtender {
     public void Initialize(IntPtr pidlFolder, IntPtr pDataObj, IntPtr hKeyProgID) {
       NLogHelper.LoadNLog();
 
-      //this.AllCommands = ICommandHelper.CreateAllCommandInstances();
+      Main.Logger.Trace("Explorer Extender initialized");
+
+      Main.Logger.Trace("Searching and instancing classes with ICommand interface");
+      this.AllAvailableCommands = ICommandHelper.CreateAllCommandInstances();
+      Main.Logger.Trace("Total classes found: {0}", this.AllAvailableCommands.Count);
+
+      Main.Logger.Trace("Process input from Explorer");
       (this.Files, this.Folders, this.IsClickOnEmptyArea) = NativeHelpers.ProcessSelectedItems(pidlFolder, pDataObj);
+      Main.Logger.Trace("Is menu opened by clicking on empty area: {0}", this.IsClickOnEmptyArea);
+      Main.Logger.Trace("Total # of selected files: {0}", this.Files.Count);
+      Main.Logger.Trace("Total # of selected folders: {0}", this.Folders.Count);
     }
     #endregion
 
@@ -67,23 +77,29 @@ namespace ExplorerExtender {
     /// <param name="uFlags"></param>
     /// <returns></returns>
     public int QueryContextMenu(IntPtr hMenu, uint iMenu, uint idCmdFirst, uint idCmdLast, uint uFlags) {
+      Main.Logger.Trace("Query Context Menu");
+
       if (((uint)CMF.CMF_DEFAULTONLY & uFlags) != 0) {
         return WinError.MAKE_HRESULT(WinError.SEVERITY_SUCCESS, 0, 0);
       }
 
+      Main.Logger.Trace("Generating menu from all available commands");
+
       SubmenuMenuItem mainMenu = new SubmenuMenuItem {
         Enabled = true,
-        Items = ICommandHelper.CreateAllCommandInstances().SelectMany(i => i.BuildMenu(this.Files, this.Folders, this.IsClickOnEmptyArea)).ToList(),
+        Items = this.AllAvailableCommands.SelectMany(i => i.BuildMenu(this.Files, this.Folders, this.IsClickOnEmptyArea)).ToList(),
         Name = "Explorer Extender"
       };
 
-      this.Menu = mainMenu.Items.GetAllCommands().ToList();
+      this.GeneratedCommands = mainMenu.Items.GetAllCommands().ToList();
 
       uint commandCounter = 0;
-      foreach (CommandMenuItem item in this.Menu) {
+      foreach (CommandMenuItem item in this.GeneratedCommands) {
         item.PositionId = idCmdFirst + commandCounter;
         item.CommandID = commandCounter++;
       }
+
+      Main.Logger.Trace("Generated menu: {0}", JsonHelper.SerializeObject(mainMenu));
 
       MENUITEMINFO miiMainMenu = mainMenu.ToMENUITEMINFO();
       NativeMethods.InsertMenuItem(hMenu, iMenu, true, ref miiMainMenu);
@@ -99,7 +115,16 @@ namespace ExplorerExtender {
     /// <param name="pszName">Use to put our result</param>
     /// <param name="cchMax">Maxinum number of size</param>
     public void GetCommandString(UIntPtr idCmd, uint uFlags, IntPtr pReserved, StringBuilder pszName, uint cchMax) {
-      CommandMenuItem command = this.Menu.FirstOrDefault(i => i.CommandID == idCmd.ToUInt32());
+      Logger.Trace("GetCommandString started");
+
+      uint commandId = idCmd.ToUInt32();
+
+      GCS requiredInfo = (GCS)uFlags;
+
+      Logger.Trace("Command ID: {0}", commandId);
+      Logger.Trace("Required info: {0}", Enum.GetName(typeof(GCS), requiredInfo));
+
+      CommandMenuItem command = this.GeneratedCommands.FirstOrDefault(i => i.CommandID == commandId);
 
       if (command != null) {
         switch ((GCS)uFlags) {
@@ -109,6 +134,7 @@ namespace ExplorerExtender {
             } else {
               pszName.Clear();
               pszName.Append(command.Name);
+              Logger.Trace("Return result: {0}", command.Name);
             }
             break;
           case GCS.GCS_HELPTEXTW:
@@ -117,6 +143,7 @@ namespace ExplorerExtender {
             } else {
               pszName.Clear();
               pszName.Append(command.HelpText);
+              Logger.Trace("Return result: {0}", command.HelpText);
             }
             break;
         }
@@ -128,8 +155,12 @@ namespace ExplorerExtender {
     /// </summary>
     /// <param name="pici">Local command ID</param>
     public void InvokeCommand(IntPtr pici) {
+      Main.Logger.Trace("InvokeCommand started");
       uint idCmd = (uint)NativeHelpers.GetCommandOffsetId(pici);
-      CommandMenuItem command = this.Menu.FirstOrDefault(i => i.CommandID == idCmd);
+
+      Main.Logger.Trace("Command Id: {0}", idCmd);
+
+      CommandMenuItem command = this.GeneratedCommands.FirstOrDefault(i => i.CommandID == idCmd);
 
       if (command != null) {
         command.CommandMethod(this.Files, this.Folders, this.IsClickOnEmptyArea);
