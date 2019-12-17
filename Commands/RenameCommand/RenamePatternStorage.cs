@@ -16,7 +16,7 @@ namespace ExplorerExtender.Commands.RenameCommand {
     }
 
     public static void Save(List<RenamePaternModel> items) {
-      if (!File.Exists(GetSettingFile())) {
+      if (File.Exists(GetSettingFile())) {
         try { File.Delete(GetSettingFile()); } catch { }
       }
 

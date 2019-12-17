@@ -2,6 +2,7 @@ using ExplorerExtender.Helpers;
 using ExplorerExtender.Models;
 using Microsoft.VisualBasic.FileIO;
 using NLog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -77,8 +78,8 @@ namespace ExplorerExtender.Commands.RenameCommand {
           string newName = patterns.Aggregate(Path.GetFileNameWithoutExtension(i.Name), (agg, p) => p.IsRegex ? Regex.Replace(agg, p.Search, p.Replace) : agg.Replace(p.Search, p.Replace)) + Path.GetExtension(i.Name);
           RenameCommand.Logger.Trace("Try to rename file from \"{0}\" to \"{1}\"", i.Name, newName);
           FileSystem.MoveFile(i.FullName, Path.Combine(i.DirectoryName, newName), UIOption.AllDialogs);
-        } catch {
-          RenameCommand.Logger.Error("Failed to rename file: {0}", i.FullName);
+        } catch (Exception ex) {
+          RenameCommand.Logger.Error("Failed to rename file: {0}\r\n{1}", i.FullName, ex.ToDetailedString());
         }
       }
 
@@ -87,8 +88,8 @@ namespace ExplorerExtender.Commands.RenameCommand {
           string newName = patterns.Aggregate(i.Name, (agg, p) => p.IsRegex ? Regex.Replace(agg, p.Search, p.Replace) : agg.Replace(p.Search, p.Replace));
           RenameCommand.Logger.Trace("Try to rename folder from \"{0}\" to \"{1}\"", i.Name, newName);
           FileSystem.MoveDirectory(i.FullName, Path.Combine(Path.GetDirectoryName(i.FullName), newName), UIOption.AllDialogs);
-        } catch {
-          RenameCommand.Logger.Error("Failed to rename folder: {0}", i.FullName);
+        } catch (Exception ex) {
+          RenameCommand.Logger.Error("Failed to rename folder: {0}\r\n{1}", i.FullName, ex.ToDetailedString());
         }
       }
     }
@@ -102,8 +103,8 @@ namespace ExplorerExtender.Commands.RenameCommand {
           if (!File.Exists(newName)) {
             FileSystem.MoveFile(i.FullName, newName, UIOption.AllDialogs);
           }
-        } catch {
-          Logger.Error("Failed to rename file - {0}", i.FullName);
+        } catch (Exception ex) {
+          RenameCommand.Logger.Error("Failed to rename file - {0}\r\n{1}", i.FullName, ex.ToDetailedString());
         }
       }
 
@@ -113,8 +114,8 @@ namespace ExplorerExtender.Commands.RenameCommand {
           if (!Directory.Exists(newName)) {
             FileSystem.MoveDirectory(i.FullName, newName, UIOption.AllDialogs);
           }
-        } catch {
-          Logger.Error("Failed to rename folder - {0}", i.FullName);
+        } catch (Exception ex) {
+          RenameCommand.Logger.Error("Failed to rename folder - {0}\r\n{1}", i.FullName, ex.ToDetailedString());
         }
       }
     }
@@ -128,8 +129,8 @@ namespace ExplorerExtender.Commands.RenameCommand {
           if (!File.Exists(newName)) {
             FileSystem.MoveFile(i.FullName, newName, UIOption.AllDialogs);
           }
-        } catch {
-          Logger.Error("Failed to rename file - {0}", i.FullName);
+        } catch (Exception ex) {
+          RenameCommand.Logger.Error("Failed to rename file - {0}\r\n{1}", i.FullName, ex.ToDetailedString());
         }
       }
 
@@ -139,8 +140,8 @@ namespace ExplorerExtender.Commands.RenameCommand {
           if (!Directory.Exists(newName)) {
             FileSystem.MoveDirectory(i.FullName, newName, UIOption.AllDialogs);
           }
-        } catch {
-          Logger.Error("Failed to rename folder - {0}", i.FullName);
+        } catch (Exception ex) {
+          RenameCommand.Logger.Error("Failed to rename folder - {0}\r\n{1}", i.FullName, ex.ToDetailedString());
         }
       }
     }

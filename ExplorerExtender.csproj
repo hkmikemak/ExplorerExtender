@@ -75,6 +75,7 @@
     </Compile>
     <Compile Include="Commands\RenameCommand\RenamePatternModel.cs" />
     <Compile Include="Commands\RenameCommand\RenamePatternStorage.cs" />
+    <Compile Include="Helpers\ExtensionMethods.cs" />
     <Compile Include="Helpers\ICommandHelper.cs" />
     <Compile Include="Helpers\JsonHelper.cs" />
     <Compile Include="Helpers\MenuItemHelper.cs" />

@@ -1,3 +1,4 @@
+using ExplorerExtender.Helpers;
 using ExplorerExtender.Models;
 using Microsoft.VisualBasic.FileIO;
 using NLog;
@@ -34,8 +35,8 @@ namespace ExplorerExtender.Commands {
               string newFolderPath = Path.Combine(parentFolder.FullName, subFolder.Name);
               Logger.Trace("Trying to move folder from \"{0}\" to \"{1}\"", subFolder.FullName, newFolderPath);
               FileSystem.MoveDirectory(subFolder.FullName, newFolderPath);
-            } catch {
-              Logger.Error("Failed to move file - {0}", i);
+            } catch (Exception ex) {
+              Logger.Error("Failed to move file - {0}\r\n{1}", i, ex.ToDetailedString());
             }
           }
 
@@ -44,26 +45,22 @@ namespace ExplorerExtender.Commands {
               string newFilePath = Path.Combine(parentFolder.FullName, subFile.Name);
               Logger.Trace("Trying to move file from \"{0}\" to \"{1}\"", subFile.FullName, newFilePath);
               FileSystem.MoveFile(subFile.FullName, newFilePath);
-            } catch {
-              Logger.Error("Failed to move folder - {0}", i);
+            } catch (Exception ex) {
+              Logger.Error("Failed to move folder - {0}\r\n", i, ex.ToDetailedString());
             }
           }
 
           if (currentFolder.EnumerateDirectories().Count() == 0 && currentFolder.EnumerateFiles().Count() == 0) {
             try {
               FileSystem.DeleteDirectory(currentFolder.FullName, UIOption.AllDialogs, RecycleOption.DeletePermanently);
-            } catch {
-              Logger.Error("Failed to delete folder - {0}", currentFolder.FullName);
+            } catch (Exception ex) {
+              Logger.Error("Failed to delete folder - {0}\r\n{1}", currentFolder.FullName, ex.ToDetailedString());
             }
           }
         } catch (Exception ex) {
-          Logger.Error(ex, "Failed to Break Folder - {0}", i);
-          Logger.Error("Error Message - {0}", ex.Message);
-          Logger.Error("Error StackTrace - {0}", ex.StackTrace);
+          Logger.Error(ex, "Failed to Break Folder - {0}\r\n{1}", i, ex.ToDetailedString());
         }
       });
     }
-
-
   }
 }

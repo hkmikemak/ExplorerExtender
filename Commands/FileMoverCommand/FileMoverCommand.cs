@@ -1,11 +1,19 @@
+using ExplorerExtender.Helpers;
 using ExplorerExtender.Models;
 using Microsoft.VisualBasic.FileIO;
+using NLog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
 namespace ExplorerExtender.Commands.FileMoverCommand {
   internal class FileMoverCommand : ICommand {
+
+
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
+
     public IEnumerable<BaseMenuItem> BuildMenu(List<string> files, List<string> folders, bool isClickOnEmptyArea) {
 
       List<FileMoverModel> currentList = FileMoverStorage.Read();
@@ -69,7 +77,9 @@ namespace ExplorerExtender.Commands.FileMoverCommand {
         .ForAll(i => {
           try {
             FileSystem.MoveFile(i.FullName, Path.Combine(folders.First(), i.Name), UIOption.AllDialogs);
-          } catch { }
+          } catch (Exception ex) {
+            Logger.Error("Failed to move file - {0}\r\n", i.FullName, ex.ToDetailedString());
+          }
         });
 
       folders.Select(i => new DirectoryInfo(i))
@@ -78,7 +88,9 @@ namespace ExplorerExtender.Commands.FileMoverCommand {
         .ForAll(i => {
           try {
             FileSystem.MoveDirectory(i.FullName, Path.Combine(folders.First(), i.Name), UIOption.AllDialogs);
-          } catch { }
+          } catch (Exception ex) {
+            Logger.Error("Failed to move file - {0}\r\n", i.FullName, ex.ToDetailedString());
+          }
         });
 
       FileMoverStorage.Save(new List<FileMoverModel> { });
